@@ -1,3 +1,6 @@
 basketball_reference_web_scraper
 matplotlib
 numpy
+flask
+flask-cors
+requests

@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Player Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1d428a;
+            --secondary-color: #c8102e;
+            --accent-color: #ffd700;
+            --dark-bg: #1a1a1a;
+            --light-bg: #f8f9fa;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #2d2d2d 100%);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 10px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(255, 215, 0, 0.25);
+            color: white;
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Fix dropdown options visibility */
+        .form-select option {
+            background-color: #2d2d2d;
+            color: white;
+        }
+
+        /* Fix dropdown background when opened */
+        .form-select:focus option {
+            background-color: #3d3d3d;
+            color: white;
+        }
+
+        /* Ensure dropdown text is visible */
+        .form-select {
+            color: white !important;
+        }
+
+        .form-select option:checked {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .form-select option:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .player-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .player-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+
+        .player-card.selected {
+            border: 2px solid var(--accent-color);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .stats-table {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .stats-table th {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+
+        .stats-table td {
+            border-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        /* Ensure table text is white and visible */
+        .table {
+            color: white;
+        }
+
+        .table th {
+            color: white;
+        }
+
+        .table td {
+            color: white;
+        }
+
+        /* Fix table background and text contrast */
+        .table {
+            color: white !important;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .table th {
+            color: white !important;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color)) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .table td {
+            color: white !important;
+            background: rgba(0, 0, 0, 0.2) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .table-hover tbody tr:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+        }
+
+        .table-hover tbody tr:hover td {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .comparison-chart {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .error-message {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .success-message {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .search-results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .season-type-badge {
+            background: linear-gradient(45deg, var(--accent-color), #ffed4e);
+            color: #333;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+        }
+
+        .vs-badge {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-weight: bold;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Fix list group items for better visibility */
+        .list-group-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .list-group-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Ensure all text in cards is white */
+        .card-body {
+            color: white;
+        }
+
+        .card-header {
+            color: white;
+        }
+
+        /* Fix form labels */
+        .form-label {
+            color: white;
+        }
+
+        /* Fix text-muted to be more visible */
+        .text-muted {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-basketball-ball me-2"></i>
+                <strong>NBA Player Analyzer</strong>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-chart-line text-warning me-3"></i>
+                    Compare NBA Players
+                </h1>
+                <p class="lead text-muted">Analyze and compare player statistics across different seasons</p>
+            </div>
+        </div>
+
+        <!-- Player Selection Form -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>
+                            Player 1
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Search Player</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="player1Search" placeholder="Enter player name...">
+                                <button class="btn btn-primary" type="button" onclick="searchPlayer(1)">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="player1Results" class="search-results mb-3"></div>
+                        
+                        <div id="player1Selection" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">Selected Player</label>
+                                <div class="player-card p-3 mb-3">
+                                    <h6 id="player1Name" class="mb-2"></h6>
+                                    <small class="text-muted">ID: <span id="player1Id"></span></small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <label class="form-label">Season Year</label>
+                                    <select class="form-select" id="player1Year">
+                                        <option value="">Select Year</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>
+                            Player 2
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Search Player</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="player2Search" placeholder="Enter player name...">
+                                <button class="btn btn-primary" type="button" onclick="searchPlayer(2)">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="player2Results" class="search-results mb-3"></div>
+                        
+                        <div id="player2Selection" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">Selected Player</label>
+                                <div class="player-card p-3 mb-3">
+                                    <h6 id="player2Name" class="mb-2"></h6>
+                                    <small class="text-muted">ID: <span id="player2Id"></span></small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <label class="form-label">Season Year</label>
+                                    <select class="form-select" id="player2Year">
+                                        <option value="">Select Year</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compare Button -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <button class="btn btn-primary btn-lg" onclick="comparePlayers()" id="compareBtn" disabled>
+                    <i class="fas fa-balance-scale me-2"></i>
+                    Compare Players
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="loading" id="loading">
+                    <div class="spinner-border text-warning" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Analyzing player statistics...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results" style="display: none;">
+            <!-- VS Badge -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <div class="vs-badge">
+                        <span id="player1Display"></span>
+                        <i class="fas fa-vs mx-3"></i>
+                        <span id="player2Display"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-table me-2"></i>
+                                Statistics Comparison
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="comparisonTable" class="stats-table"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Chart -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Visual Comparison
+                            </h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <img id="comparisonChart" class="comparison-chart" alt="Player Comparison Chart">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let selectedPlayers = { player1: null, player2: null };
+        
+        // Initialize year dropdowns
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentYear = new Date().getFullYear();
+            const yearSelects = ['player1Year', 'player2Year'];
+            
+            yearSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                for (let year = currentYear; year >= 1950; year--) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    select.appendChild(option);
+                }
+            });
+        });
+
+        // Search for players
+        async function searchPlayer(playerNum) {
+            const searchInput = document.getElementById(`player${playerNum}Search`);
+            const resultsDiv = document.getElementById(`player${playerNum}Results`);
+            const searchTerm = searchInput.value.trim();
+            
+            if (!searchTerm) {
+                showError(`Please enter a player name to search.`, resultsDiv);
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/search-players', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ search_term: searchTerm })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displaySearchResults(playerNum, data.players);
+                } else {
+                    showError(data.error, resultsDiv);
+                }
+            } catch (error) {
+                showError('Failed to search for players. Please try again.', resultsDiv);
+            }
+        }
+
+        // Display search results
+        function displaySearchResults(playerNum, players) {
+            const resultsDiv = document.getElementById(`player${playerNum}Results`);
+            
+            if (players.length === 0) {
+                resultsDiv.innerHTML = '<div class="text-muted">No players found.</div>';
+                return;
+            }
+            
+            let html = '<div class="list-group">';
+            players.forEach(player => {
+                html += `
+                    <div class="list-group-item player-card" onclick="selectPlayer(${playerNum}, '${player.id}', '${player.name}')">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${player.name}</h6>
+                                <small class="text-muted">ID: ${player.id}</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Select a player
+        function selectPlayer(playerNum, playerId, playerName) {
+            selectedPlayers[`player${playerNum}`] = {
+                id: playerId,
+                name: playerName
+            };
+            
+            // Update UI
+            document.getElementById(`player${playerNum}Id`).textContent = playerId;
+            document.getElementById(`player${playerNum}Name`).textContent = playerName;
+            document.getElementById(`player${playerNum}Selection`).style.display = 'block';
+            document.getElementById(`player${playerNum}Results`).innerHTML = '';
+            document.getElementById(`player${playerNum}Search`).value = playerName;
+            
+            // Enable compare button if both players are selected
+            updateCompareButton();
+        }
+
+        // Update compare button state
+        function updateCompareButton() {
+            const compareBtn = document.getElementById('compareBtn');
+            const player1Year = document.getElementById('player1Year').value;
+            const player2Year = document.getElementById('player2Year').value;
+            
+            if (selectedPlayers.player1 && selectedPlayers.player2 && player1Year && player2Year) {
+                compareBtn.disabled = false;
+            } else {
+                compareBtn.disabled = true;
+            }
+        }
+
+        // Add event listeners for year changes
+        document.getElementById('player1Year').addEventListener('change', updateCompareButton);
+        document.getElementById('player2Year').addEventListener('change', updateCompareButton);
+
+        // Compare players
+        async function comparePlayers() {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            // Show loading
+            loading.classList.add('show');
+            results.style.display = 'none';
+            
+            try {
+                const player1Data = {
+                    ...selectedPlayers.player1,
+                    year: parseInt(document.getElementById('player1Year').value)
+                };
+                
+                const player2Data = {
+                    ...selectedPlayers.player2,
+                    year: parseInt(document.getElementById('player2Year').value)
+                };
+                
+                const response = await fetch('/api/compare-players', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        player1: player1Data,
+                        player2: player2Data
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayResults(data, player1Data, player2Data);
+                } else {
+                    showError(data.error);
+                }
+            } catch (error) {
+                showError('Failed to compare players. Please try again.');
+            } finally {
+                loading.classList.remove('show');
+            }
+        }
+
+        // Display comparison results
+        function displayResults(data, player1Data, player2Data) {
+            const results = document.getElementById('results');
+            
+            // Update player display names
+            document.getElementById('player1Display').textContent = `${player1Data.name} (${player1Data.year})`;
+            document.getElementById('player2Display').textContent = `${player2Data.name} (${player2Data.year})`;
+            
+            // Display comparison table
+            const tableDiv = document.getElementById('comparisonTable');
+            tableDiv.innerHTML = formatComparisonTable(data.comparison_table);
+            
+            // Display chart
+            const chartImg = document.getElementById('comparisonChart');
+            chartImg.src = `data:image/png;base64,${data.chart_data}`;
+            
+            // Show results
+            results.style.display = 'block';
+            
+            // Scroll to results
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Format comparison table
+        function formatComparisonTable(tableText) {
+            const lines = tableText.split('\n');
+            let html = '<table class="table table-hover table-striped mb-0">';
+            
+            lines.forEach((line, index) => {
+                if (line.includes('===') || line.includes('---')) {
+                    return; // Skip separator lines
+                }
+                
+                if (index === 0) {
+                    // Header line
+                    html += '<thead><tr>';
+                    const parts = line.split(/\s+/);
+                    parts.forEach(part => {
+                        if (part.trim()) {
+                            html += `<th class="text-center">${part.trim()}</th>`;
+                        }
+                    });
+                    html += '</tr></thead><tbody>';
+                } else if (line.trim()) {
+                    // Data line
+                    html += '<tr>';
+                    const parts = line.split(/\s+/);
+                    parts.forEach(part => {
+                        if (part.trim()) {
+                            html += `<td class="text-center">${part.trim()}</td>`;
+                        }
+                    });
+                    html += '</tr>';
+                }
+            });
+            
+            html += '</tbody></table>';
+            return html;
+        }
+
+        // Show error message
+        function showError(message, targetElement = null) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${message}`;
+            
+            if (targetElement) {
+                targetElement.innerHTML = '';
+                targetElement.appendChild(errorDiv);
+            } else {
+                // Show in a general location
+                const container = document.querySelector('.container');
+                container.insertBefore(errorDiv, container.firstChild);
+                
+                // Remove after 5 seconds
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            }
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = `<i class="fas fa-check-circle me-2"></i>${message}`;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(successDiv, container.firstChild);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                successDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html> 
